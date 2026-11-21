@@ -8,7 +8,7 @@
   <!-- 인쇄 시 물리 A4 용지 크기 및 방향을 동적으로 주입하는 스타일 -->
   <style id="dynamic-print-page">
     @page {
-      size: 297mm 210mm;
+      size: A4 landscape;
       margin: 0;
     }
   </style>
@@ -240,31 +240,31 @@
 
     .helper-text {
       margin: 0;
-      font-size: 11.5px;
-      color: var(--text-muted);
-      line-height: 1.48;
+    /* 4개 핵심 탭: 사진 / 용지·출력 / 레이아웃 / 디자인 */
+    .sidebar-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      padding: 8px 8px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border-light);
+      flex-shrink: 0;
     }
 
-    .divider {
-      height: 1px;
-      background: var(--border-light);
-      margin: 2px 0;
-    }
-
-    .btn {
-      display: inline-flex;
+    .tab-btn {
+      display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      padding: 8px 12px;
+      gap: 4px;
+      padding: 8px 4px;
+      border: 1px solid transparent;
       border-radius: var(--radius-sm);
-      border: 1px solid var(--border-mid);
-      background: #ffffff;
-      color: var(--text-primary);
-      font-size: 12px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 11.5px;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.14s ease;
+      transition: all 0.15s ease;
       white-space: nowrap;
     }
 
@@ -735,6 +735,15 @@
       color: #b45309;
       font-size: 10px;
       font-weight: 700;
+    }
+
+    .tag-page {
+      padding: 1.5px 6px;
+      border-radius: 999px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 10px;
+      font-weight: 800;
     }
 
     .tag-cropped {
@@ -1211,557 +1220,340 @@
       color: #92400e;
     }
 
+    .sheet-tag.mirror {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      color: #1d4ed8;
+    }
+
+    /* A5 화면 미리보기 전용 슬롯 페이지 배지 (인쇄 및 PNG 저장 시 제외) */
+    .slot-page-pill {
+      position: absolute;
+      top: 7px;
+      left: 7px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.72);
+      color: #ffffff;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      pointer-events: none;
+      z-index: 8500;
+      user-select: none;
+      backdrop-filter: blur(2px);
+    }
+
     /* =========================================================================
        5. 명시적 픽셀 기반 A4 미리보기 시트, 슬롯, 사진 카드 및 스냅 가이드
        ========================================================================= */
-    .a4-sheet {
-      position: relative;
-      background: #ffffff;
-      box-shadow: var(--shadow-sheet);
-      border-radius: 2px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
+/* ... existing code ... -->
+      <!-- 4개 메인 탭 -->
+      <nav class="sidebar-tabs" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="photos" role="tab" aria-selected="true">
+          <span>사진</span>
+          <span class="tab-badge" id="tab-photo-count">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="paper" role="tab" aria-selected="false">
+          <span>용지/출력</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="layout" role="tab" aria-selected="false">
+          <span>레이아웃</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="design" role="tab" aria-selected="false">
+          <span>디자인</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-body">
+        <!-- ================= TAB 1: 사진 ================= -->
+        <section class="tab-panel active" id="panel-photos">
+          <div class="section-group">
+            <div class="dropzone" id="upload-dropzone" tabindex="0" role="button" aria-label="사진 파일 업로드">
+              <div class="dropzone-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <div class="dropzone-title">사진을 드래그하거나 클릭하여 업로드</div>
+              <div class="dropzone-sub">
+                다중 이미지 지원 · 어디서나 <span class="kbd">Ctrl</span> + <span class="kbd">V</span> 붙여넣기 가능
+              </div>
+              <input type="file" id="file-input" accept="image/*" multiple hidden />
+            </div>
+
+            <div class="photo-toolbar-btns">
+              <button type="button" class="btn btn-soft" id="btn-load-samples">샘플 다시 넣기</button>
+              <button type="button" class="btn btn-danger-ghost" id="btn-clear-all">전체 삭제</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="section-group">
+            <div class="label-row">
+              <span class="section-label">사진 목록 (<span id="photo-list-count">0</span>장)</span>
+              <span class="helper-text">드래그로 순서 변경</span>
+            </div>
+            <div class="photo-list" id="photo-list"></div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 2: 용지/출력 ================= -->
+        <section class="tab-panel" id="panel-paper">
+          <div class="section-group">
+            <span class="section-label">최종 유인물 크기</span>
+            <div class="choice-stack">
+              <button type="button" class="choice-card active" data-paper="A4">
+                <span class="choice-title">A4 (210 × 297mm)</span>
+                <span class="choice-desc">A4 용지 1장에 유인물 1페이지를 그대로 출력합니다.</span>
+              </button>
+              <button type="button" class="choice-card" data-paper="A5">
+                <span class="choice-title">A5 (A4 2분할 출력) <span class="pill-tag">반절 양면</span></span>
+                <span class="choice-desc">A4 한 장에 서로 다른 2p(1p | 2p)를 넣고 동일 시트를 2장 만들어 양면 절단합니다.</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="section-group">
+            <span class="section-label">유인물 방향</span>
+            <div class="segment">
+              <button type="button" class="seg-btn active" data-orient="landscape">가로 (Landscape)</button>
+              <button type="button" class="seg-btn" data-orient="portrait">세로 (Portrait)</button>
+            </div>
+            <div class="info-box" id="paper-calc-info">
+              프린터 출력 용지: <strong>A4 가로 (297 × 210mm)</strong>
+            </div>
+          </div>
+
+          <!-- A5 전용 2분할 양면 설정 -->
+          <div class="sub-card" id="a5-settings-panel" style="display: none;">
+            <div class="sub-card-title">A5 2분할 출력 방식</div>
+            <div class="choice-stack">
+              <button type="button" class="choice-card active" data-a5-mode="pair-dup">
+                <span class="choice-title">서로 다른 2p · 동일 2장 복제 <span class="pill-tag">양면 절단 추천</span></span>
+                <span class="choice-desc">시트1 앞면 [1p | 2p], 시트2 뒷면 [1p | 2p] 동일 복제 → 양면 인쇄 후 반으로 자르면 A5 양면 2부 완성</span>
+              </button>
+              <button type="button" class="choice-card" data-a5-mode="pair-single">
+                <span class="choice-title">서로 다른 2p · 1장씩만 (복제 없음)</span>
+                <span class="choice-desc">A4 용지 한 장에 [1p | 2p], [3p | 4p]를 복제 없이 1장씩만 배치합니다.</span>
+              </button>
+              <button type="button" class="choice-card" data-a5-mode="pair-swap">
+                <span class="choice-title">서로 다른 2p · 뒷면 위치 반전</span>
+                <span class="choice-desc">앞면 [1p | 2p], 뒷면 [2p | 1p] 위치 반전 (A5 가로 · 긴 쪽 넘기기 양면 인쇄용)</span>
+              </button>
+            </div>
+
+            <div class="info-box amber" id="duplex-hint-box"></div>
+
+            <div class="section-group">
+              <span class="section-label">중앙 절취선</span>
+              <div class="segment cols-3">
+                <button type="button" class="seg-btn active" data-cut="dashed">점선</button>
+                <button type="button" class="seg-btn" data-cut="ticks">상하 재단선</button>
+                <button type="button" class="seg-btn" data-cut="none">없음</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 3: 레이아웃 ================= -->
+        <section class="tab-panel" id="panel-layout">
+          <div class="section-group">
+            <span class="section-label">배치 방식</span>
+            <div class="choice-stack">
+              <button type="button" class="choice-card active" data-layout="auto-fit">
+                <span class="choice-title">자동 비율 맞춤 <span class="pill-tag">샘플 스타일</span></span>
+                <span class="choice-desc">사진 원본·자르기 비율을 잘림 없이 유지하며, 넓은 사진에 더 넓은 폭을 자동 배분합니다.</span>
+              </button>
+              <button type="button" class="choice-card" data-layout="equal-grid">
+                <span class="choice-title">균등 그리드</span>
+                <span class="choice-desc">모든 칸을 동일한 크기로 나누어 정갈하게 배치합니다.</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="section-group">
+            <span class="section-label">총 페이지 수 (유인물 기준)</span>
+            <div class="segment">
+              <button type="button" class="seg-btn active" data-page-mode="auto">자동</button>
+              <button type="button" class="seg-btn" data-page-mode="manual">직접 지정 (1~10p)</button>
+            </div>
+            <div id="manual-pages-wrap" style="display: none; margin-top: 4px;">
+              <div class="page-num-grid" id="page-num-grid"></div>
+            </div>
+            <p class="helper-text" id="page-dist-summary"></p>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="section-group">
+            <div class="slider-block">
+              <span class="section-label">바깥 여백</span>
+              <div class="slider-row">
+                <input type="range" id="range-margin" min="0" max="25" step="0.5" value="8" />
+                <div class="num-inline">
+                  <input type="number" id="num-margin" min="0" max="25" step="0.5" value="8" />
+                  <span>mm</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="slider-block">
+              <span class="section-label">사진 간격</span>
+              <div class="slider-row">
+                <input type="range" id="range-gap" min="0" max="20" step="0.5" value="7" />
+                <div class="num-inline">
+                  <input type="number" id="num-gap" min="0" max="20" step="0.5" value="7" />
+                  <span>mm</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB 4: 디자인 ================= -->
+        <section class="tab-panel" id="panel-design">
+          <div class="section-group">
+            <span class="section-label">사진 프레임 프리셋</span>
+            <div class="preset-grid">
+              <button type="button" class="preset-card active" data-preset="white-shadow">
+                <div class="preset-swatch" style="padding:3px; border-radius:2px; box-shadow:0 3px 8px rgba(0,0,0,0.24);">
+                  <div class="preset-swatch-inner"></div>
+                </div>
+                <div>
+                  <div class="preset-name">화이트 그림자</div>
+                  <div class="preset-sub">샘플 기본</div>
+                </div>
+              </button>
+
+              <button type="button" class="preset-card" data-preset="soft-round">
+                <div class="preset-swatch" style="padding:3px; border-radius:8px; box-shadow:0 3px 9px rgba(0,0,0,0.2);">
+                  <div class="preset-swatch-inner" style="border-radius:5px;"></div>
+                </div>
+                <div>
+                  <div class="preset-name">소프트 라운드</div>
+                  <div class="preset-sub">부드러운 모서리</div>
+                </div>
+              </button>
+
+              <button type="button" class="preset-card" data-preset="thin-line">
+                <div class="preset-swatch" style="padding:1px; border:1px solid #cbd5e1; border-radius:2px; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+                  <div class="preset-swatch-inner"></div>
+                </div>
+                <div>
+                  <div class="preset-name">얇은 라인</div>
+                  <div class="preset-sub">깔끔한 회색선</div>
+                </div>
+              </button>
+
+              <button type="button" class="preset-card" data-preset="matte-border">
+                <div class="preset-swatch" style="padding:5px; border-radius:2px; box-shadow:0 2px 6px rgba(0,0,0,0.18);">
+                  <div class="preset-swatch-inner"></div>
+                </div>
+                <div>
+                  <div class="preset-name">매트 보더</div>
+                  <div class="preset-sub">도톰한 화이트 액자</div>
+                </div>
+              </button>
+
+              <button type="button" class="preset-card" data-preset="polaroid">
+                <div class="preset-swatch" style="padding:2px 2px 8px 2px; border-radius:2px; box-shadow:0 3px 8px rgba(0,0,0,0.24);">
+                  <div class="preset-swatch-inner"></div>
+                </div>
+                <div>
+                  <div class="preset-name">폴라로이드</div>
+                  <div class="preset-sub">하단 여백 프레임</div>
+                </div>
+              </button>
+
+              <button type="button" class="preset-card" data-preset="none">
+                <div class="preset-swatch" style="padding:0; box-shadow:none;">
+                  <div class="preset-swatch-inner"></div>
+                </div>
+                <div>
+                  <div class="preset-name">프레임 없음</div>
+                  <div class="preset-sub">원본 그대로</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="section-group">
+            <div class="slider-block">
+              <span class="section-label">프레임 두께</span>
+              <div class="slider-row">
+                <input type="range" id="range-border-mm" min="0" max="6" step="0.2" value="1.6" />
+                <div class="num-inline">
+                  <input type="number" id="num-border-mm" min="0" max="6" step="0.2" value="1.6" />
+                  <span>mm</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="slider-block">
+              <span class="section-label">모서리 둥글기</span>
+              <div class="slider-row">
+                <input type="range" id="range-radius-mm" min="0" max="8" step="0.2" value="0.8" />
+                <div class="num-inline">
+                  <input type="number" id="num-radius-mm" min="0" max="8" step="0.2" value="0.8" />
+                  <span>mm</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="slider-block">
+              <span class="section-label">그림자 강도</span>
+              <div class="slider-row">
+                <input type="range" id="range-shadow" min="0" max="100" step="5" value="65" />
+                <div class="num-inline">
+                  <input type="number" id="num-shadow" min="0" max="100" step="5" value="65" />
+                  <span>%</span>
+                </div>
+              </div>
+            </div>
+
+            <label class="toggle-row" for="chk-subtle-outline">
+              <span>미세 외곽선(헤어라인) 표시</span>
+              <input type="checkbox" id="chk-subtle-outline" checked />
+            </label>
+          </div>
+        </section>
+      </div>
+    </aside>
 
-    .page-slot {
-      position: absolute;
-      overflow: hidden;
-      background: #ffffff;
-    }
-
-    .photo-card {
-      position: absolute;
-      box-sizing: border-box;
-      user-select: none;
-      cursor: grab;
-      touch-action: none;
-    }
-
-    .photo-card:hover {
-      outline: 1.5px dashed rgba(37, 99, 235, 0.55);
-      outline-offset: 1px;
-    }
-
-    .photo-card.selected {
-      outline: 2.2px solid #2563eb;
-      outline-offset: 1px;
-    }
-
-    .photo-card.is-dragging {
-      cursor: grabbing;
-    }
-
-    .photo-frame-inner {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      overflow: hidden;
-      background: #f8fafc;
-      display: block;
-      pointer-events: none;
-    }
-
-    .photo-img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      pointer-events: none;
-      user-select: none;
-    }
-
-    /* 4개 모서리 리사이즈 핸들 (명시적 px 캔버스이므로 항상 선명한 고정 크기) */
-    .resize-handle {
-      display: none;
-      position: absolute;
-      width: 11px;
-      height: 11px;
-      background: #ffffff;
-      border: 2px solid #2563eb;
-      border-radius: 2.5px;
-      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3);
-      z-index: 40;
-      touch-action: none;
-    }
-
-    .photo-card.selected .resize-handle {
-      display: block;
-    }
-
-    .resize-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
-    .resize-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
-    .resize-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
-    .resize-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
-
-    /* 선택 시 크기 툴팁 */
-    .card-size-pill {
-      display: none;
-      position: absolute;
-      left: 50%;
-      bottom: -8px;
-      transform: translate(-50%, 100%);
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.88);
-      color: #ffffff;
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-      pointer-events: none;
-      z-index: 50;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
-    }
-
-    .photo-card.selected .card-size-pill {
-      display: block;
-    }
-
-    /* 호버 퀵 버튼 */
-    .card-quick-bar {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      opacity: 0;
-      transition: opacity 0.14s ease;
-      z-index: 35;
-    }
-
-    .photo-card:hover .card-quick-bar,
-    .photo-card.selected .card-quick-bar {
-      opacity: 1;
-    }
-
-    .photo-card.is-dragging .card-quick-bar {
-      opacity: 0 !important;
-      pointer-events: none;
-    }
-
-    .quick-btn {
-      padding: 3px 7px;
-      border-radius: 5px;
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      background: rgba(15, 23, 42, 0.82);
-      color: #ffffff;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .quick-btn:hover {
-      background: #2563eb;
-    }
-
-    .quick-btn.del:hover {
-      background: #dc2626;
-    }
-
-    /* 스냅 가이드 오버레이 (절대 투명 배경, 포인터 이벤트 통과) */
-    .snap-guides-layer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: transparent;
-      z-index: 9000;
-    }
-
-    .snap-line {
-      position: absolute;
-      pointer-events: none;
-    }
-
-    .snap-line.v {
-      top: 0;
-      bottom: 0;
-      width: 0;
-      border-left: 1.5px dashed #ec4899;
-    }
-
-    .snap-line.h {
-      left: 0;
-      right: 0;
-      height: 0;
-      border-top: 1.5px dashed #ec4899;
-    }
-
-    .snap-line.type-photo.v {
-      border-left-color: #0ea5e9;
-    }
-
-    .snap-line.type-photo.h {
-      border-top-color: #0ea5e9;
-    }
-
-    /* A5 절취선 오버레이 */
-    .cut-overlay {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: transparent;
-      z-index: 8000;
-    }
-
-    .cut-tick {
-      position: absolute;
-      background: #94a3b8;
-    }
-
-    .cut-dashed-v {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 50%;
-      width: 0;
-      border-left: 1.4px dashed #94a3b8;
-    }
-
-    .cut-dashed-h {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 50%;
-      height: 0;
-      border-top: 1.4px dashed #94a3b8;
-    }
-
-    .cut-scissor-badge {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #ffffff;
-      color: #64748b;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .empty-slot-guide {
-      position: absolute;
-      inset: 24px;
-      border: 1.5px dashed #cbd5e1;
-      border-radius: 10px;
-      background: #f8fafc;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      text-align: center;
-      color: #64748b;
-      padding: 16px;
-    }
-
-    .empty-slot-guide strong {
-      font-size: 14px;
-      color: #334155;
-    }
-
-    .empty-slot-guide span {
-      font-size: 12px;
-      line-height: 1.5;
-    }
-
-    .blank-half-note {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #cbd5e1;
-      font-size: 13px;
-      font-weight: 700;
-      background: #fafafa;
-    }
-
-    /* =========================================================================
-       6. 비파괴 Canvas 사진 자르기 모달 & 커스텀 확인 모달 & 토스트
-       ========================================================================= */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.65);
-      backdrop-filter: blur(4px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      z-index: 10000;
-    }
-
-    .modal-backdrop.open {
-      display: flex;
-    }
-
-    .crop-dialog {
-      width: min(860px, 100%);
-      max-height: 92vh;
-      background: #ffffff;
-      border-radius: 14px;
-      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .modal-head {
-      padding: 12px 18px;
-      border-bottom: 1px solid var(--border-light);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .modal-title {
-      font-size: 15px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .crop-px-badge {
-      font-size: 11.5px;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 999px;
-      background: var(--bg-muted);
-      color: var(--text-secondary);
-    }
-
-    .crop-controls-bar {
-      padding: 10px 18px;
-      background: var(--bg-subtle);
-      border-bottom: 1px solid var(--border-light);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .ratio-group {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-
-    .ratio-btn {
-      padding: 5px 10px;
-      border-radius: 999px;
-      border: 1px solid var(--border-mid);
-      background: #ffffff;
-      color: var(--text-secondary);
-      font-size: 11.5px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .ratio-btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #ffffff;
-    }
-
-    .crop-stage {
-      flex: 1;
-      min-height: 320px;
-      max-height: 58vh;
-      background: #0f172a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 14px;
-      position: relative;
-      overflow: hidden;
-      touch-action: none;
-      user-select: none;
-    }
-
-    #crop-canvas {
-      display: block;
-      max-width: 100%;
-      max-height: 100%;
-      touch-action: none;
-    }
-
-    .modal-foot {
-      padding: 12px 18px;
-      border-top: 1px solid var(--border-light);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      background: #ffffff;
-    }
-
-    .confirm-dialog {
-      width: min(360px, 100%);
-      background: #ffffff;
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .confirm-dialog h3 {
-      margin: 0;
-      font-size: 15px;
-    }
-
-    .confirm-dialog p {
-      margin: 0;
-      font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.5;
-    }
-
-    .toast-stack {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      z-index: 12000;
-      pointer-events: none;
-    }
-
-    .toast {
-      background: #0f172a;
-      color: #ffffff;
-      padding: 9px 16px;
-      border-radius: 10px;
-      font-size: 12.5px;
-      font-weight: 600;
-      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.28);
-    }
-
-    /* 좁은 화면 반응형: 미리보기를 숨기지 않고 상하 분할 또는 탭 토글로 안전하게 표시 */
-    @media (max-width: 900px) {
-      .app-shell {
-        flex-direction: column;
-        height: 100vh;
-        height: 100dvh;
-      }
-
-      .sidebar {
-        width: 100%;
-        min-width: 100%;
-        height: 44%;
-        border-right: none;
-        border-bottom: 1px solid var(--border-light);
-      }
-
-      .preview-pane {
-        height: 56%;
-      }
-    }
-
-    /* =========================================================================
-       7. 인쇄 전용 #print-root (화면에서는 숨김, 인쇄 시 정밀 mm 1:1 출력)
-       ========================================================================= */
-    #print-root {
-      display: none;
-    }
-
-    @media print {
-      html, body {
-        width: auto !important;
-        height: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        background: #ffffff !important;
-        overflow: visible !important;
-      }
-
-      .app-shell,
-      .modal-backdrop,
-      .toast-stack {
-        display: none !important;
-      }
-
-      #print-root {
-        display: block !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-
-      .print-a4-sheet {
-        position: relative;
-        background: #ffffff;
-        overflow: hidden;
-        margin: 0;
-        padding: 0;
-        page-break-after: always;
-        break-after: page;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-
-      .print-a4-sheet:last-child {
-        page-break-after: auto !important;
-        break-after: auto !important;
-      }
-
-      .print-slot {
-        position: absolute;
-        overflow: hidden;
-        background: #ffffff;
-      }
-
-      .print-card {
-        position: absolute;
-        box-sizing: border-box;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-
-      .print-card-inner {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        position: relative;
-      }
-
-      .print-card-inner img {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-
-      .print-cut-overlay {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        z-index: 999;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="app-shell">
     <!-- =====================================================================
-         왼쪽 컨트롤 사이드바 (360px)
+         오른쪽 실시간 미리보기 워크스페이스
          ===================================================================== -->
-    <aside class="sidebar" aria-label="유인물 제작 설정">
-      <header class="sidebar-header">
-        <div class="brand">
-          <div class="brand-icon" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1"></rect>
-              <rect x="14" y="3" width="7" height="7" rx="1"></rect>
-              <rect x="14" y="14" width="7" height="7" rx="1"></rect>
-              <rect x="3" y="14" width="7" height="7" rx="1"></rect>
-            </svg>
+    <main class="preview-pane">
+      <!-- 상단 고정 툴바 -->
+      <div class="top-toolbar">
+        <div class="tb-group">
+          <button type="button" class="chip-toggle active" id="btn-aspect-lock" title="크기 조절 시 비율 유지 (드래그 중 Shift로 임시 해제)">
+            비율고정 ON
+          </button>
+          <button type="button" class="chip-toggle active" id="btn-snap-toggle" title="여백·중앙·다른 사진에 자석 정렬">
+            자석정렬 ON
+          </button>
+
+          <div class="icon-group" role="group" aria-label="실행취소 및 다시실행">
+            <button type="button" class="icon-btn" id="btn-undo" title="실행취소 (Ctrl+Z)" disabled>↶</button>
+            <button type="button" class="icon-btn" id="btn-redo" title="다시실행 (Ctrl+Y)" disabled>↷</button>
+          </div>
+
+          <button type="button" class="chip-toggle" id="btn-reset-all-pos" title="모든 사진의 수동 위치·크기 초기화">
+            전체 위치 초기화
+          </button>
+        </div>
+
+        <div class="tb-group">
+          <div class="summary-pill">
+            <span class="summary-dot"></span>
+            <span id="summary-text">A4 가로 · 1p (A4 1장)</span>
           </div>
           <div>
             <div class="brand-title">유인물 자동 제작기</div>
@@ -2131,7 +1923,7 @@
 
           <div class="insp-group">
             <button type="button" class="insp-btn primary" id="insp-crop">자르기</button>
-            <button type="button" class="insp-btn" id="insp-reset-one">이 사진 자동위치</button>
+            <button type="button" class="insp-btn" id="insp-reset-one">자동위치 복원</button>
           </div>
         </div>
       </div>
@@ -2227,7 +2019,7 @@
 
         paperSize: 'A4',        // 'A4' | 'A5'
         orientation: 'landscape', // 'landscape' | 'portrait'
-        a5Mode: 'duplicate',    // 'duplicate' | 'sequential' | 'duplex-auto'
+        a5Mode: 'pair-dup',     // 'pair-dup' | 'pair-single' | 'pair-swap'
         cutLine: 'dashed',      // 'dashed' | 'ticks' | 'none'
 
         pageCountMode: 'auto',  // 'auto' | 'manual'
@@ -2474,6 +2266,13 @@
         const b2 = (1.2 * pxScale).toFixed(2);
         const a2 = (0.16 * s).toFixed(3);
         return `0 ${y1}${unit} ${b1}${unit} rgba(15, 23, 42, ${a1}), 0 ${y2}${unit} ${b2}${unit} rgba(15, 23, 42, ${a2})`;
+      }
+
+      /** 현재 프레임 프리셋(폴라로이드 포함)에 따른 상·우·하·좌 패딩(mm) 계산 */
+      function getFramePadsMm() {
+        const b = clamp(state.frameBorderMm, 0, 6);
+        const bottom = state.framePreset === 'polaroid' ? Math.max(b * 3.2, 5.5) : b;
+        return { top: b, right: b, bottom, left: b, totalX: b * 2, totalY: b + bottom };
       }
 
       /* =======================================================================
@@ -2939,6 +2738,9 @@
 
           const srcUrl = photo.displayUrl || photo.originalUrl;
           const badge = formatAspectBadge(photo.aspectRatio);
+          const meta = renderedMetaMap.get(photo.id);
+          const pageNum = meta ? (meta.pageIndex + 1) : (Number.isInteger(photo.pageIndex) ? photo.pageIndex + 1 : 1);
+          const pageTag = `<span class="tag-page">${pageNum}p</span>`;
           const demoTag = photo.isDemo ? '<span class="tag-demo">샘플</span>' : '';
           const manualTag = photo.manualRect ? '<span class="tag-manual">수동</span>' : '';
           const cropTag = (photo.crop || photo.rotation) ? '<span class="tag-cropped">● 자르기</span>' : '';
@@ -2957,6 +2759,7 @@
             </div>
             <div class="photo-row-main">
               <div class="photo-badges">
+                ${pageTag}
                 <span class="ratio-badge">${badge}</span>
                 ${demoTag}
                 ${manualTag}
@@ -3070,9 +2873,11 @@
           return clamp(Math.round(state.manualPageCount), 1, 10);
         }
         const n = state.photos.length;
-        if (n === 0) return 1;
-        const perPage = state.paperSize === 'A4' ? 6 : 4;
-        return clamp(Math.ceil(n / perPage), 1, 10);
+        if (state.paperSize === 'A5') {
+          // A5는 한 시트에 서로 다른 2페이지(1p | 2p)가 바로 배치되도록 최소 2페이지 보장
+          return clamp(Math.max(2, Math.ceil(n / 4)), 2, 10);
+        }
+        return clamp(Math.max(1, Math.ceil(n / 6)), 1, 10);
       }
 
       function partitionIntoRows(photos, innerW, innerH) {
@@ -3120,7 +2925,7 @@
 
         const margin = clamp(state.marginMm, 0, Math.min(pageW, pageH) * 0.3);
         const gap = clamp(state.gapMm, 0, 25);
-        const pad = clamp(state.frameBorderMm, 0, 6);
+        const pads = getFramePadsMm();
 
         const innerW = Math.max(20, pageW - margin * 2);
         const innerH = Math.max(20, pageH - margin * 2);
@@ -3142,16 +2947,16 @@
             const cellH = rowMaxH;
             rowPhotos.forEach((photo, cIdx) => {
               const r = clamp(safeNum(photo.aspectRatio, 4 / 3), 0.25, 4);
-              const maxImgW = Math.max(4, cellW - pad * 2);
-              const maxImgH = Math.max(4, cellH - pad * 2);
+              const maxImgW = Math.max(4, cellW - pads.totalX);
+              const maxImgH = Math.max(4, cellH - pads.totalY);
               let imgW = maxImgW;
               let imgH = imgW / r;
               if (imgH > maxImgH) {
                 imgH = maxImgH;
                 imgW = imgH * r;
               }
-              const cardW = Math.max(MIN_CARD_MM, imgW + pad * 2);
-              const cardH = Math.max(MIN_CARD_MM, imgH + pad * 2);
+              const cardW = Math.max(MIN_CARD_MM, imgW + pads.totalX);
+              const cardH = Math.max(MIN_CARD_MM, imgH + pads.totalY);
               const cellX = margin + cIdx * (cellW + gap);
               const x = cellX + (cellW - cardW) / 2;
               const y = rowTopY + (cellH - cardH) / 2;
@@ -3164,12 +2969,12 @@
           const ratios = rowPhotos.map(p => clamp(safeNum(p.aspectRatio, 4 / 3), 0.3, 3.5));
           const weights = ratios.map(r => Math.pow(clamp(r, 0.55, 2.2), 0.65));
           const weightSum = weights.reduce((a, b) => a + b, 0) || 1;
-          const maxImgH = Math.max(4, rowMaxH - pad * 2);
+          const maxImgH = Math.max(4, rowMaxH - pads.totalY);
 
           const cards = rowPhotos.map((photo, i) => {
             const r = ratios[i];
             const slotW = (rowAvailW * weights[i]) / weightSum;
-            const maxImgW = Math.max(4, slotW - pad * 2);
+            const maxImgW = Math.max(4, slotW - pads.totalX);
             let imgW = maxImgW;
             let imgH = imgW / r;
             if (imgH > maxImgH) {
@@ -3178,8 +2983,8 @@
             }
             return {
               photo,
-              w: Math.max(MIN_CARD_MM, imgW + pad * 2),
-              h: Math.max(MIN_CARD_MM, imgH + pad * 2)
+              w: Math.max(MIN_CARD_MM, imgW + pads.totalX),
+              h: Math.max(MIN_CARD_MM, imgH + pads.totalY)
             };
           });
 
@@ -3312,10 +3117,14 @@
             a4H: a4.h,
             a4Orientation: a4.orientation,
             splitDir: 'none',
-            isDuplexBack: false,
+            sideRole: '',
+            isDuplicateBack: false,
+            isSwapBack: false,
+            exportTag: `p${lp.pageNum}`,
             slots: [{
               x: 0, y: 0, w: a4.w, h: a4.h,
               empty: false,
+              expectedPageNum: lp.pageNum,
               pageIndex: lp.pageIndex,
               pageNum: lp.pageNum,
               items: lp.items
@@ -3323,21 +3132,29 @@
           }));
         }
 
-        // A5 2분할 슬롯 좌표
-        const isLR = state.orientation === 'portrait'; // A5 세로 -> A4 가로 좌|우
+        // A5 2분할 슬롯 좌표 (A5 세로 -> A4 가로 좌|우, A5 가로 -> A4 세로 상/하)
+        const isLR = state.orientation === 'portrait';
         const splitDir = isLR ? 'lr' : 'tb';
         const slotGeo = isLR
           ? [{ x: 0, y: 0, w: 148.5, h: 210 }, { x: 148.5, y: 0, w: 148.5, h: 210 }]
           : [{ x: 0, y: 0, w: 210, h: 148.5 }, { x: 0, y: 148.5, w: 210, h: 148.5 }];
 
-        const makeSlot = (geo, pageIdx) => {
+        const makeSlot = (geo, pageIdx, expectedNum) => {
           if (pageIdx == null || pageIdx < 0 || pageIdx >= logicalPages.length) {
-            return { ...geo, empty: true, pageIndex: null, pageNum: null, items: [] };
+            return {
+              ...geo,
+              empty: true,
+              expectedPageNum: expectedNum,
+              pageIndex: null,
+              pageNum: null,
+              items: []
+            };
           }
           const lp = logicalPages[pageIdx];
           return {
             ...geo,
             empty: false,
+            expectedPageNum: lp.pageNum,
             pageIndex: lp.pageIndex,
             pageNum: lp.pageNum,
             items: lp.items
@@ -3345,51 +3162,71 @@
         };
 
         const sheets = [];
-        if (state.a5Mode === 'duplicate') {
-          logicalPages.forEach((_, idx) => {
-            sheets.push({
-              sheetIndex: idx,
-              a4W: a4.w, a4H: a4.h, a4Orientation: a4.orientation,
-              splitDir,
-              isDuplexBack: false,
-              slots: [makeSlot(slotGeo[0], idx), makeSlot(slotGeo[1], idx)]
-            });
-          });
-        } else if (state.a5Mode === 'sequential') {
-          for (let i = 0; i < logicalPages.length; i += 2) {
-            sheets.push({
-              sheetIndex: sheets.length,
-              a4W: a4.w, a4H: a4.h, a4Orientation: a4.orientation,
-              splitDir,
-              isDuplexBack: false,
-              slots: [makeSlot(slotGeo[0], i), makeSlot(slotGeo[1], i + 1)]
-            });
-          }
-        } else {
-          // 양면 절단 자동 매칭 (단변 넘기기 기준): 앞면 [1 | 3], 뒷면 [4 | 2]
-          const total = logicalPages.length;
-          const groups = Math.ceil(total / 4);
-          for (let g = 0; g < groups; g++) {
-            const p1 = g * 4;
-            const p2 = g * 4 + 1;
-            const p3 = g * 4 + 2;
-            const p4 = g * 4 + 3;
+        const total = logicalPages.length;
+
+        // 2페이지씩 쌍(p, p+1)을 묶어 서로 다른 2페이지를 한 A4 시트에 배치
+        for (let p = 0; p < total; p += 2) {
+          const pA = p;
+          const pB = (p + 1 < total) ? (p + 1) : null;
+          const expA = p + 1;
+          const expB = p + 2;
+
+          if (state.a5Mode === 'pair-dup') {
+            // 앞면 [p | p+1] + 뒷면 [p | p+1] 동일 2장 복제
             sheets.push({
               sheetIndex: sheets.length,
               a4W: a4.w, a4H: a4.h, a4Orientation: a4.orientation,
               splitDir,
-              isDuplexBack: false,
-              slots: [makeSlot(slotGeo[0], p1), makeSlot(slotGeo[1], p3)]
+              sideRole: '앞면',
+              isDuplicateBack: false,
+              isSwapBack: false,
+              exportTag: 'front',
+              slots: [makeSlot(slotGeo[0], pA, expA), makeSlot(slotGeo[1], pB, expB)]
             });
-            if (p2 < total || p4 < total) {
-              sheets.push({
-                sheetIndex: sheets.length,
-                a4W: a4.w, a4H: a4.h, a4Orientation: a4.orientation,
-                splitDir,
-                isDuplexBack: true,
-                slots: [makeSlot(slotGeo[0], p4), makeSlot(slotGeo[1], p2)]
-              });
-            }
+            sheets.push({
+              sheetIndex: sheets.length,
+              a4W: a4.w, a4H: a4.h, a4Orientation: a4.orientation,
+              splitDir,
+              sideRole: '뒷면 · 동일 복제',
+              isDuplicateBack: true,
+              isSwapBack: false,
+              exportTag: 'back',
+              slots: [makeSlot(slotGeo[0], pA, expA), makeSlot(slotGeo[1], pB, expB)]
+            });
+          } else if (state.a5Mode === 'pair-swap') {
+            // 앞면 [p | p+1] + 뒷면 [p+1 | p] 위치 반전 (긴 쪽 넘기기 양면 인쇄용)
+            sheets.push({
+              sheetIndex: sheets.length,
+              a4W: a4.w, a4H: a4.h, a4Orientation: a4.orientation,
+              splitDir,
+              sideRole: '앞면',
+              isDuplicateBack: false,
+              isSwapBack: false,
+              exportTag: 'front',
+              slots: [makeSlot(slotGeo[0], pA, expA), makeSlot(slotGeo[1], pB, expB)]
+            });
+            sheets.push({
+              sheetIndex: sheets.length,
+              a4W: a4.w, a4H: a4.h, a4Orientation: a4.orientation,
+              splitDir,
+              sideRole: '뒷면 · 위치 반전',
+              isDuplicateBack: false,
+              isSwapBack: true,
+              exportTag: 'back_swap',
+              slots: [makeSlot(slotGeo[0], pB, expB), makeSlot(slotGeo[1], pA, expA)]
+            });
+          } else {
+            // pair-single: 서로 다른 2p · 1장씩만 (복제 없음)
+            sheets.push({
+              sheetIndex: sheets.length,
+              a4W: a4.w, a4H: a4.h, a4Orientation: a4.orientation,
+              splitDir,
+              sideRole: '',
+              isDuplicateBack: false,
+              isSwapBack: false,
+              exportTag: 'single',
+              slots: [makeSlot(slotGeo[0], pA, expA), makeSlot(slotGeo[1], pB, expB)]
+            });
           }
         }
         return sheets;
@@ -3411,24 +3248,50 @@
 
       function updateStatusUI(logicalPages, sheets) {
         const a4 = getPhysicalA4SizeMm();
-        const orientKr = a4.orientation === 'landscape' ? '가로' : '세로';
+        const a4OrientKr = a4.orientation === 'landscape' ? '가로' : '세로';
+        const handoutOrientKr = state.orientation === 'landscape' ? '가로' : '세로';
 
         // 동적 @page 갱신
-        dom.dynamicPrintPage.textContent = `@page { size: ${a4.w}mm ${a4.h}mm; margin: 0; }`;
+        dom.dynamicPrintPage.textContent = `@page { size: A4 ${a4.orientation}; margin: 0; }`;
 
         if (state.paperSize === 'A4') {
-          dom.paperCalcInfo.innerHTML = `프린터 출력 용지: <strong>A4 ${orientKr} (${a4.w} × ${a4.h}mm)</strong>`;
-          dom.summaryText.textContent = `A4 ${orientKr} · 총 ${sheets.length}장`;
+          dom.paperCalcInfo.innerHTML = `프린터 출력 용지: <strong>A4 ${a4OrientKr} (${a4.w} × ${a4.h}mm)</strong>`;
+          dom.summaryText.textContent = `A4 ${handoutOrientKr} · ${logicalPages.length}p (A4 ${sheets.length}장)`;
         } else {
           const splitTxt = state.orientation === 'portrait'
             ? '좌 | 우 2분할 (각 148.5 × 210mm)'
             : '상 / 하 2분할 (각 210 × 148.5mm)';
-          dom.paperCalcInfo.innerHTML = `프린터 출력 용지: <strong>A4 ${orientKr} (${a4.w} × ${a4.h}mm)</strong><br />${splitTxt}`;
-          dom.summaryText.textContent = `A5 2분할 → A4 ${orientKr} · 총 ${sheets.length}장`;
+          dom.paperCalcInfo.innerHTML = `프린터 출력 용지: <strong>A4 ${a4OrientKr} (${a4.w} × ${a4.h}mm)</strong><br />${splitTxt}`;
+
+          if (state.a5Mode === 'pair-dup') {
+            const duplexSheets = Math.ceil(sheets.length / 2);
+            dom.summaryText.textContent = `A5 ${handoutOrientKr} · ${logicalPages.length}p → A4 ${sheets.length}장 (양면 ${duplexSheets}장 → A5 2부)`;
+          } else if (state.a5Mode === 'pair-swap') {
+            const duplexSheets = Math.ceil(sheets.length / 2);
+            dom.summaryText.textContent = `A5 ${handoutOrientKr} · ${logicalPages.length}p → A4 ${sheets.length}장 (양면 ${duplexSheets}장 반전 → A5 2부)`;
+          } else {
+            dom.summaryText.textContent = `A5 ${handoutOrientKr} · ${logicalPages.length}p → A4 ${sheets.length}장 (단면)`;
+          }
         }
 
         dom.a5SettingsPanel.style.display = state.paperSize === 'A5' ? 'flex' : 'none';
-        dom.duplexHintBox.style.display = (state.paperSize === 'A5' && state.a5Mode === 'duplex-auto') ? 'block' : 'none';
+
+        if (state.paperSize === 'A5') {
+          dom.duplexHintBox.style.display = 'block';
+          if (state.a5Mode === 'pair-dup') {
+            if (state.orientation === 'portrait') {
+              dom.duplexHintBox.innerHTML = '<strong>양면 인쇄 안내 (A5 세로):</strong> 프린터 양면 인쇄(<strong>짧은 쪽 넘기기</strong>)로 출력 후 중앙 세로선을 자르면 앞(1p)·뒤(2p) 양면 A5 유인물 2부가 완성됩니다.';
+            } else {
+              dom.duplexHintBox.innerHTML = '<strong>양면 인쇄 안내 (A5 가로):</strong> 프린터 양면 인쇄(<strong>짧은 쪽/상하 넘기기</strong>)로 출력 후 중앙 가로선을 자르면 앞(1p)·뒤(2p) 2부가 완성됩니다. 긴 쪽(좌우) 양면 인쇄 시 아래 <strong>\'뒷면 위치 반전\'</strong>을 선택하세요.';
+            }
+          } else if (state.a5Mode === 'pair-swap') {
+            dom.duplexHintBox.innerHTML = '<strong>긴 쪽 양면 인쇄 안내:</strong> 앞면 [1p | 2p], 뒷면 [2p | 1p]로 반전 배치됩니다. 프린터에서 <strong>긴 쪽 넘기기(장변)</strong> 양면 인쇄 후 중앙을 자르면 앞(1p)·뒤(2p) A5 2부가 정확히 맞습니다.';
+          } else {
+            dom.duplexHintBox.innerHTML = '<strong>단면 1장씩 출력:</strong> A4 한 장에 서로 다른 2페이지(1p, 2p)를 복제 없이 1장씩만 배치합니다.';
+          }
+        } else {
+          dom.duplexHintBox.style.display = 'none';
+        }
 
         if (state.photos.length === 0) {
           dom.pageDistSummary.textContent = '사진을 추가하면 페이지별로 균등 자동 배치됩니다.';
@@ -3499,7 +3362,8 @@
         const pxPerMm = BASE_PX_PER_MM * state.zoom;
         const shadowCss = getShadowCss(pxPerMm, 'px');
         const outlineCss = state.subtleOutline ? '1px solid rgba(15, 23, 42, 0.14)' : 'none';
-        const hasWhiteBg = state.frameBorderMm > 0.01 || state.subtleOutline;
+        const padsMm = getFramePadsMm();
+        const hasWhiteBg = padsMm.totalX > 0.01 || padsMm.totalY > 0.01 || state.subtleOutline;
 
         renderedMetaMap.clear();
         dom.sheetsStack.innerHTML = '';
@@ -3511,18 +3375,20 @@
           const block = document.createElement('div');
           block.className = 'sheet-block';
 
-          const sideLabel = sheets.length > 1 ? (sIdx % 2 === 0 ? ' (앞면)' : ' (뒷면)') : '';
+          const roleLabel = sheet.sideRole ? ` (${sheet.sideRole})` : '';
+          const sep = sheet.splitDir === 'tb' ? ' / ' : ' | ';
           const slotDesc = sheet.slots
-            .map(s => (s.empty ? '빈 면' : `${s.pageNum}p`))
-            .join(sheet.splitDir === 'tb' ? ' / ' : ' | ');
+            .map(s => (s.empty ? `${s.expectedPageNum || ''}p 빈 면` : `${s.pageNum}p`))
+            .join(sep);
 
           const metaBar = document.createElement('div');
           metaBar.className = 'sheet-meta-bar';
           metaBar.style.width = `${sheetWpx}px`;
           metaBar.innerHTML = `
-            <span>A4 출력용지 ${sIdx + 1}${sideLabel}</span>
+            <span>A4 시트 ${sIdx + 1}${roleLabel} · ${slotDesc}</span>
             <div class="sheet-tags">
-              ${sheet.isDuplexBack ? '<span class="sheet-tag duplex">양면 절단 매칭</span>' : ''}
+              ${sheet.isDuplicateBack ? '<span class="sheet-tag mirror">실시간 미러 동기화</span>' : ''}
+              ${sheet.isSwapBack ? '<span class="sheet-tag duplex">뒷면 위치 반전</span>' : ''}
               <span class="sheet-tag">${slotDesc}</span>
             </div>
           `;
@@ -3550,20 +3416,33 @@
             slotEl.style.height = `${sh}px`;
 
             if (slot.empty) {
-              slotEl.innerHTML = '<div class="blank-half-note">빈 면</div>';
+              const expTxt = slot.expectedPageNum ? `${slot.expectedPageNum}p · 빈 페이지` : '빈 페이지';
+              slotEl.innerHTML = `
+                ${sheet.splitDir !== 'none' && slot.expectedPageNum ? `<div class="slot-page-pill">${slot.expectedPageNum}p</div>` : ''}
+                <div class="blank-half-note">${expTxt}</div>
+              `;
               sheetEl.appendChild(slotEl);
               return;
             }
 
             slotEl.dataset.pageIndex = String(slot.pageIndex);
 
+            // A5 화면 전용 페이지 배지 (인쇄/PNG 제외)
+            if (sheet.splitDir !== 'none') {
+              const badgeEl = document.createElement('div');
+              badgeEl.className = 'slot-page-pill';
+              badgeEl.textContent = `${slot.pageNum}p`;
+              slotEl.appendChild(badgeEl);
+            }
+
             if (slot.items.length === 0) {
-              slotEl.innerHTML = `
-                <div class="empty-slot-guide">
-                  <strong>${state.photos.length === 0 ? '사진을 업로드하면 자동으로 배치됩니다' : '이 페이지에 배치된 사진이 없습니다'}</strong>
-                  <span>${state.photos.length === 0 ? '왼쪽에서 사진을 선택하거나 Ctrl+V로 바로 붙여넣어 보세요.' : '사진을 추가하거나 페이지 수를 조정해보세요.'}</span>
-                </div>
+              const emptyMsg = document.createElement('div');
+              emptyMsg.className = 'empty-slot-guide';
+              emptyMsg.innerHTML = `
+                <strong>${state.photos.length === 0 ? '사진을 업로드하면 자동으로 배치됩니다' : `${slot.pageNum}p · 빈 페이지`}</strong>
+                <span>${state.photos.length === 0 ? '왼쪽에서 사진을 선택하거나 Ctrl+V로 바로 붙여넣어 보세요.' : '사진을 추가하거나 다른 페이지 사진을 이 페이지로 이동할 수 있습니다.'}</span>
               `;
+              slotEl.appendChild(emptyMsg);
               sheetEl.appendChild(slotEl);
               return;
             }
@@ -3580,10 +3459,11 @@
               const cy = safeNum(item.y * pxPerMm, 0);
               const cw = Math.max(20, safeNum(item.w * pxPerMm, 40));
               const ch = Math.max(20, safeNum(item.h * pxPerMm, 40));
-              const rawBorderPx = safeNum(state.frameBorderMm * pxPerMm, 0);
-              const borderPx = Math.min(rawBorderPx, Math.min(cw, ch) * 0.2);
+              const maxPadPx = Math.min(cw, ch) * 0.24;
+              const padSidePx = Math.min(safeNum(padsMm.left * pxPerMm, 0), maxPadPx);
+              const padBottomPx = Math.min(safeNum(padsMm.bottom * pxPerMm, 0), ch * 0.32);
               const radiusPx = Math.min(safeNum(state.cornerRadiusMm * pxPerMm, 0), Math.min(cw, ch) * 0.45);
-              const innerRadiusPx = Math.max(0, radiusPx - borderPx * 0.35);
+              const innerRadiusPx = Math.max(0, radiusPx - padSidePx * 0.35);
 
               const cardEl = document.createElement('div');
               cardEl.className = 'photo-card' + (item.photo.id === state.selectedPhotoId ? ' selected' : '');
@@ -3594,7 +3474,7 @@
               cardEl.style.width = `${cw}px`;
               cardEl.style.height = `${ch}px`;
               cardEl.style.zIndex = String(item.zIndex);
-              cardEl.style.padding = `${borderPx}px`;
+              cardEl.style.padding = `${padSidePx}px ${padSidePx}px ${padBottomPx}px ${padSidePx}px`;
               cardEl.style.background = hasWhiteBg ? '#ffffff' : 'transparent';
               cardEl.style.borderRadius = `${radiusPx}px`;
               cardEl.style.boxShadow = shadowCss;
@@ -3620,10 +3500,10 @@
                 cardEl.appendChild(hEl);
               });
 
-              // 실시간 크기 툴팁
+              // 실시간 크기 및 좌표 툴팁
               const pillEl = document.createElement('div');
               pillEl.className = 'card-size-pill';
-              pillEl.textContent = `${item.w.toFixed(1)} × ${item.h.toFixed(1)} mm`;
+              pillEl.textContent = `${item.w.toFixed(1)} × ${item.h.toFixed(1)} mm · (${item.x.toFixed(1)}, ${item.y.toFixed(1)})`;
               cardEl.appendChild(pillEl);
 
               // 호버 퀵 액션 버튼
@@ -3680,6 +3560,7 @@
         });
 
         renderPrintRoot(sheets);
+        renderPhotoList();
         syncInspectorBar();
       }
 
@@ -3687,7 +3568,8 @@
       function renderPrintRoot(sheets) {
         const shadowCssMm = getShadowCss(1, 'mm');
         const outlineCss = state.subtleOutline ? '0.22mm solid rgba(15, 23, 42, 0.16)' : 'none';
-        const hasWhiteBg = state.frameBorderMm > 0.01 || state.subtleOutline;
+        const padsMm = getFramePadsMm();
+        const hasWhiteBg = padsMm.totalX > 0.01 || padsMm.totalY > 0.01 || state.subtleOutline;
 
         dom.printRoot.innerHTML = '';
 
@@ -3708,9 +3590,10 @@
             slotEl.style.height = `${slot.h}mm`;
 
             slot.items.forEach((item) => {
-              const padMm = Math.min(state.frameBorderMm, Math.min(item.w, item.h) * 0.2);
+              const padSide = Math.min(padsMm.left, Math.min(item.w, item.h) * 0.24);
+              const padBot = Math.min(padsMm.bottom, item.h * 0.32);
               const radMm = Math.min(state.cornerRadiusMm, Math.min(item.w, item.h) * 0.45);
-              const innerRadMm = Math.max(0, radMm - padMm * 0.35);
+              const innerRadMm = Math.max(0, radMm - padSide * 0.35);
 
               const cardEl = document.createElement('div');
               cardEl.className = 'print-card';
@@ -3719,7 +3602,7 @@
               cardEl.style.width = `${item.w.toFixed(3)}mm`;
               cardEl.style.height = `${item.h.toFixed(3)}mm`;
               cardEl.style.zIndex = String(item.zIndex);
-              cardEl.style.padding = `${padMm.toFixed(3)}mm`;
+              cardEl.style.padding = `${padSide.toFixed(3)}mm ${padSide.toFixed(3)}mm ${padBot.toFixed(3)}mm ${padSide.toFixed(3)}mm`;
               cardEl.style.background = hasWhiteBg ? '#ffffff' : 'transparent';
               cardEl.style.borderRadius = `${radMm.toFixed(3)}mm`;
               cardEl.style.boxShadow = shadowCssMm;
@@ -3800,16 +3683,19 @@
         const cy = safeNum(rect.y * pxPerMm, 0);
         const cw = Math.max(20, safeNum(rect.w * pxPerMm, 40));
         const ch = Math.max(20, safeNum(rect.h * pxPerMm, 40));
-        const borderPx = Math.min(safeNum(state.frameBorderMm * pxPerMm, 0), Math.min(cw, ch) * 0.2);
+        const padsMm = getFramePadsMm();
+        const padSidePx = Math.min(safeNum(padsMm.left * pxPerMm, 0), Math.min(cw, ch) * 0.24);
+        const padBottomPx = Math.min(safeNum(padsMm.bottom * pxPerMm, 0), ch * 0.32);
 
+        // 동일 사진이 시트1·시트2에 복제되어 있을 때 모든 DOM 노드를 동시에 실시간 미러 업데이트
         dom.sheetsStack.querySelectorAll(`.photo-card[data-photo-id="${photoId}"]`).forEach(el => {
           el.style.left = `${cx}px`;
           el.style.top = `${cy}px`;
           el.style.width = `${cw}px`;
           el.style.height = `${ch}px`;
-          el.style.padding = `${borderPx}px`;
+          el.style.padding = `${padSidePx}px ${padSidePx}px ${padBottomPx}px ${padSidePx}px`;
           const pill = el.querySelector('.card-size-pill');
-          if (pill) pill.textContent = `${rect.w.toFixed(1)} × ${rect.h.toFixed(1)} mm`;
+          if (pill) pill.textContent = `${rect.w.toFixed(1)} × ${rect.h.toFixed(1)} mm · (${rect.x.toFixed(1)}, ${rect.y.toFixed(1)})`;
         });
 
         const meta = renderedMetaMap.get(photoId);
@@ -3903,7 +3789,7 @@
             freeAspect: !!meta.item.freeAspect
           },
           otherRects,
-          padMm: clamp(state.frameBorderMm, 0, 6),
+          padsMm: getFramePadsMm(),
           aspect: clamp(safeNum(photo.aspectRatio, 4 / 3), 0.2, 5),
           moved: false,
           historySaved: false
@@ -4031,16 +3917,17 @@
               freeAspect: true
             };
           } else {
-            const pad2 = m.padMm * 2;
+            const padX = m.padsMm.totalX;
+            const padY = m.padsMm.totalY;
             const r = m.aspect;
-            const minImgH = Math.max(MIN_CARD_MM - pad2, (MIN_CARD_MM - pad2) / r, 3);
-            const maxImgH = Math.max(minImgH, Math.min(maxH - pad2, (maxW - pad2) / r));
+            const minImgH = Math.max(MIN_CARD_MM - padY, (MIN_CARD_MM - padX) / r, 3);
+            const maxImgH = Math.max(minImgH, Math.min(maxH - padY, (maxW - padX) / r));
 
-            let targetImgH = (((Math.max(3, rawW - pad2) / r) + Math.max(3, rawH - pad2)) / 2);
+            let targetImgH = (((Math.max(3, rawW - padX) / r) + Math.max(3, rawH - padY)) / 2);
             targetImgH = clamp(targetImgH, minImgH, maxImgH);
 
-            let nw = targetImgH * r + pad2;
-            let nh = targetImgH + pad2;
+            let nw = targetImgH * r + padX;
+            let nh = targetImgH + padY;
 
             if (state.snapEnabled) {
               const { vTargets, hTargets } = buildSnapTargets(m.pageW, m.pageH, m.otherRects);
@@ -4057,12 +3944,12 @@
               });
               if (best) {
                 const candImgH = best.axis === 'v'
-                  ? ((isW ? anchorX - best.pos : best.pos - anchorX) - pad2) / r
-                  : (isN ? anchorY - best.pos : best.pos - anchorY) - pad2;
+                  ? ((isW ? anchorX - best.pos : best.pos - anchorX) - padX) / r
+                  : (isN ? anchorY - best.pos : best.pos - anchorY) - padY;
                 if (candImgH >= minImgH && candImgH <= maxImgH) {
                   targetImgH = candImgH;
-                  nw = targetImgH * r + pad2;
-                  nh = targetImgH + pad2;
+                  nw = targetImgH * r + padX;
+                  nh = targetImgH + padY;
                   guides.push({ axis: best.axis, pos: best.pos, type: best.type });
                 }
               }
@@ -4158,7 +4045,7 @@
 
         pushHistory();
         const it = meta.item;
-        const pad2 = clamp(state.frameBorderMm, 0, 6) * 2;
+        const pads = getFramePadsMm();
         const aspect = clamp(safeNum(photo.aspectRatio, 4 / 3), 0.2, 5);
         let x = it.x, y = it.y, w = it.w, h = it.h;
         let freeAspect = !!it.freeAspect;
@@ -4168,8 +4055,8 @@
         else if (field === 'w') {
           w = clamp(val, MIN_CARD_MM, meta.pageW);
           if (state.aspectLock) {
-            h = clamp((w - pad2) / aspect + pad2, MIN_CARD_MM, meta.pageH);
-            w = clamp((h - pad2) * aspect + pad2, MIN_CARD_MM, meta.pageW);
+            h = clamp((w - pads.totalX) / aspect + pads.totalY, MIN_CARD_MM, meta.pageH);
+            w = clamp((h - pads.totalY) * aspect + pads.totalX, MIN_CARD_MM, meta.pageW);
             freeAspect = false;
           } else {
             freeAspect = true;
@@ -4179,8 +4066,8 @@
         } else if (field === 'h') {
           h = clamp(val, MIN_CARD_MM, meta.pageH);
           if (state.aspectLock) {
-            w = clamp((h - pad2) * aspect + pad2, MIN_CARD_MM, meta.pageW);
-            h = clamp((w - pad2) / aspect + pad2, MIN_CARD_MM, meta.pageH);
+            w = clamp((h - pads.totalY) * aspect + pads.totalX, MIN_CARD_MM, meta.pageW);
+            h = clamp((w - pads.totalX) / aspect + pads.totalY, MIN_CARD_MM, meta.pageH);
             freeAspect = false;
           } else {
             freeAspect = true;
@@ -4305,7 +4192,6 @@
       }
 
       function renderAll() {
-        renderPhotoList();
         renderPreview();
       }
 
@@ -4334,7 +4220,8 @@
           }
 
           const s = clamp(state.shadowStrength, 0, 100) / 100;
-          const hasWhiteBg = state.frameBorderMm > 0.01 || state.subtleOutline;
+          const padsMm = getFramePadsMm();
+          const hasWhiteBg = padsMm.totalX > 0.01 || padsMm.totalY > 0.01 || state.subtleOutline;
 
           for (let i = 0; i < sheets.length; i++) {
             const sheet = sheets[i];
@@ -4363,9 +4250,10 @@
                 const cy = oy + item.y * k;
                 const cw = item.w * k;
                 const ch = item.h * k;
-                const pad = Math.min(state.frameBorderMm * k, Math.min(cw, ch) * 0.2);
+                const padSide = Math.min(padsMm.left * k, Math.min(cw, ch) * 0.24);
+                const padBot = Math.min(padsMm.bottom * k, ch * 0.32);
                 const rad = Math.min(state.cornerRadiusMm * k, Math.min(cw, ch) * 0.45);
-                const irad = Math.max(0, rad - pad * 0.35);
+                const irad = Math.max(0, rad - padSide * 0.35);
 
                 // 다층 그림자 + 화이트 배경
                 if (s > 0.001) {
@@ -4393,10 +4281,10 @@
                 }
 
                 // 이미지 (object-fit: cover 클리핑)
-                const ix = cx + pad;
-                const iy = cy + pad;
-                const iw = Math.max(1, cw - pad * 2);
-                const ih = Math.max(1, ch - pad * 2);
+                const ix = cx + padSide;
+                const iy = cy + padSide;
+                const iw = Math.max(1, cw - padSide * 2);
+                const ih = Math.max(1, ch - padSide - padBot);
                 const imgEl = imgCache.get(item.photo.displayUrl || item.photo.originalUrl);
 
                 if (imgEl) {
@@ -4458,8 +4346,12 @@
             }
 
             const a = document.createElement('a');
-            const prefix = state.paperSize === 'A5' ? 'A5반절_A4시트' : 'A4유인물';
-            a.download = `${prefix}_${i + 1}.png`;
+            if (state.paperSize === 'A5') {
+              const tag = sheet.exportTag || `sheet${i + 1}`;
+              a.download = `handout_A5_sheet${i + 1}_${tag}.png`;
+            } else {
+              a.download = `handout_A4_sheet${i + 1}.png`;
+            }
             a.href = canvas.toDataURL('image/png');
             document.body.appendChild(a);
             a.click();
@@ -4810,18 +4702,18 @@
           // 수동 배치된 사진이라면 비율 변화에 맞춰 중심 기준 크기 보정
           if (photo.manualRect && !photo.manualRect.freeAspect) {
             const page = getLogicalPageSizeMm();
-            const pad2 = clamp(state.frameBorderMm, 0, 6) * 2;
+            const pads = getFramePadsMm();
             const mr = photo.manualRect;
             const cx = mr.x + mr.w / 2, cy = mr.y + mr.h / 2;
             let nw = mr.w;
-            let nh = Math.max(MIN_CARD_MM, (nw - pad2) / photo.aspectRatio + pad2);
+            let nh = Math.max(MIN_CARD_MM, (nw - pads.totalX) / photo.aspectRatio + pads.totalY);
             if (nh > page.h) {
               nh = page.h;
-              nw = Math.max(MIN_CARD_MM, (nh - pad2) * photo.aspectRatio + pad2);
+              nw = Math.max(MIN_CARD_MM, (nh - pads.totalY) * photo.aspectRatio + pads.totalX);
             }
             if (nw > page.w) {
               nw = page.w;
-              nh = Math.max(MIN_CARD_MM, (nw - pad2) / photo.aspectRatio + pad2);
+              nh = Math.max(MIN_CARD_MM, (nw - pads.totalX) / photo.aspectRatio + pads.totalY);
             }
             photo.manualRect = {
               x: clamp(cx - nw / 2, 0, Math.max(0, page.w - nw)),
@@ -4848,12 +4740,12 @@
       function applyFramePreset(preset) {
         state.framePreset = preset;
         const map = {
-          'white-shadow':   { border: 1.6, shadow: 65, radius: 0.8, outline: true },
-          'slim-white':     { border: 0.8, shadow: 40, radius: 0.6, outline: true },
-          'thin-border':    { border: 0.4, shadow: 15, radius: 0.4, outline: true },
-          'minimal-shadow': { border: 0,   shadow: 70, radius: 0.8, outline: false },
-          'rounded-card':   { border: 1.8, shadow: 55, radius: 3.6, outline: true },
-          'none':           { border: 0,   shadow: 0,  radius: 0,   outline: false }
+          'white-shadow': { border: 1.6, shadow: 65, radius: 0.8, outline: true },
+          'soft-round':   { border: 1.8, shadow: 55, radius: 3.6, outline: true },
+          'thin-line':    { border: 0.4, shadow: 15, radius: 0.4, outline: true },
+          'matte-border': { border: 3.2, shadow: 45, radius: 0.6, outline: true },
+          'polaroid':     { border: 2.0, shadow: 68, radius: 0.8, outline: true },
+          'none':         { border: 0,   shadow: 0,  radius: 0,   outline: false }
         };
         const cfg = map[preset];
         if (cfg) {
@@ -5070,7 +4962,7 @@
         dom.btnSnapToggle.addEventListener('click', () => {
           state.snapEnabled = !state.snapEnabled;
           dom.btnSnapToggle.classList.toggle('active', state.snapEnabled);
-          dom.btnSnapToggle.textContent = state.snapEnabled ? '자석스냅 ON' : '자석스냅 OFF';
+          dom.btnSnapToggle.textContent = state.snapEnabled ? '자석정렬 ON' : '자석정렬 OFF';
         });
 
         dom.btnUndo.addEventListener('click', undo);
